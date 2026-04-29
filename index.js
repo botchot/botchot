@@ -148,18 +148,19 @@ function parseMessage(text) {
 
 const client = new Client({
   authStrategy: new LocalAuth({
-    clientId: 'main-bot',
-    dataPath: '/data/.wwebjs_auth'
+    clientId: "main-bot",
+    dataPath: "/data/.wwebjs_auth"
   }),
   puppeteer: {
-  executablePath: process.env.PUPPETEER_EXECUTABLE_PATH,
-  headless: true,
-  args: [
-    "--no-sandbox",
-    "--disable-setuid-sandbox",
-    "--disable-dev-shm-usage"
-  ]
-}
+    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH,
+    headless: true,
+    args: [
+      "--no-sandbox",
+      "--disable-setuid-sandbox",
+      "--disable-dev-shm-usage"
+    ]
+  }
+});
 
 let currentStep = 1;
 
