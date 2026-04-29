@@ -7,6 +7,8 @@ const PORT = process.env.PORT || 3000;
 
 let latestQR = null;
 
+/* ---------- EXPRESS ---------- */
+
 app.get("/", (req, res) => {
   res.send("Bot Running ✅");
 });
@@ -14,28 +16,34 @@ app.get("/", (req, res) => {
 app.get("/qr", (req, res) => {
   if (!latestQR) {
     return res.send(`
-      <h2 style="font-family:Arial;text-align:center;margin-top:50px;">
-        WhatsApp Already Connected ✅
-      </h2>
+      <html>
+      <body style="background:#111;color:#fff;text-align:center;padding:40px;font-family:Arial">
+        <h2>WhatsApp Already Connected ✅</h2>
+        <p>QR aayega jab session logout hoga.</p>
+      </body>
+      </html>
     `);
   }
 
   res.send(`
     <html>
-      <body style="background:#111;color:#fff;text-align:center;font-family:Arial;padding:30px">
-        <h2>Scan WhatsApp QR</h2>
-        <img src="https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=${encodeURIComponent(latestQR)}" />
-        <p>WhatsApp → Linked Devices → Link Device</p>
-        <script>setTimeout(()=>location.reload(),20000)</script>
-      </body>
+    <body style="background:#111;color:#fff;text-align:center;padding:30px;font-family:Arial">
+      <h2>Scan WhatsApp QR</h2>
+      <img src="https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=${encodeURIComponent(latestQR)}" />
+      <p>WhatsApp → Linked Devices → Link Device</p>
+      <script>
+        setTimeout(()=>location.reload(),15000)
+      </script>
+    </body>
     </html>
   `);
 });
 
 app.listen(PORT, "0.0.0.0", () => {
   console.log("🌐 Server running on port " + PORT);
-  console.log("📱 QR page: /qr");
 });
+
+/* ---------- WHATSAPP ---------- */
 
 const client = new Client({
   authStrategy: new LocalAuth({
@@ -43,14 +51,12 @@ const client = new Client({
     dataPath: "/data/.wwebjs_auth"
   }),
   puppeteer: {
-    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || "/usr/bin/chromium",
     headless: true,
     args: [
       "--no-sandbox",
       "--disable-setuid-sandbox",
       "--disable-dev-shm-usage",
       "--disable-gpu",
-      "--disable-extensions",
       "--disable-features=ProcessSingleton",
       "--user-data-dir=/tmp/chrome-profile"
     ]
@@ -63,14 +69,14 @@ client.on("qr", (qr) => {
   qrcode.generate(qr, { small: true });
 });
 
-client.on("authenticated", () => {
-  latestQR = null;
-  console.log("✅ Session Saved");
-});
-
 client.on("ready", () => {
   latestQR = null;
-  console.log("🚀 Bot LIVE");
+  console.log("🚀 Bot Ready");
+});
+
+client.on("authenticated", () => {
+  latestQR = null;
+  console.log("✅ Authenticated");
 });
 
 client.on("auth_failure", (msg) => {
@@ -89,8 +95,11 @@ client.on("message", async (msg) => {
   }
 
   if (text === "status") {
-    await msg.reply("Bot online hai ✅");
+    await msg.reply("Bot Online ✅");
   }
 });
 
-client.initialize();
+/* Delay startup for Railway */
+setTimeout(() => {
+  client.initialize();
+}, 3000);
