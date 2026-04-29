@@ -7,10 +7,12 @@ const PORT = process.env.PORT || 3000;
 
 let latestQR = null;
 
+// Home
 app.get("/", (req, res) => {
   res.send("Bot Running ✅");
 });
 
+// QR Page
 app.get("/qr", (req, res) => {
   if (!latestQR) {
     return res.send(`
@@ -31,47 +33,69 @@ app.get("/qr", (req, res) => {
   `);
 });
 
-app.listen(PORT, () => {
+// Start Server
+app.listen(PORT, "0.0.0.0", () => {
   console.log("🌐 Server running on port " + PORT);
   console.log("📱 QR page: /qr");
 });
 
+// WhatsApp Client
 const client = new Client({
   authStrategy: new LocalAuth({
     clientId: "main-bot",
-    dataPath: "./.wwebjs_auth"
+    dataPath: "/data/.wwebjs_auth"
   }),
   puppeteer: {
-    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH,
+    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || "/usr/bin/chromium",
     headless: true,
     args: [
       "--no-sandbox",
       "--disable-setuid-sandbox",
-      "--disable-dev-shm-usage"
+      "--disable-dev-shm-usage",
+      "--disable-gpu"
     ]
   }
 });
 
+// QR Event
 client.on("qr", (qr) => {
   latestQR = qr;
   console.log("📱 QR Generated");
   qrcode.generate(qr, { small: true });
 });
 
+// Auth Saved
 client.on("authenticated", () => {
   latestQR = null;
   console.log("✅ Session Saved");
 });
 
+// Ready
 client.on("ready", () => {
   latestQR = null;
   console.log("🚀 Bot LIVE");
 });
 
+// Demo Message
 client.on("message", async (msg) => {
-  if (msg.body.toLowerCase() === "ping") {
+  const text = msg.body.toLowerCase().trim();
+
+  if (text === "ping") {
     msg.reply("pong ✅");
   }
+
+  if (text === "status") {
+    msg.reply("Bot online hai ✅");
+  }
+});
+
+// Error Catch
+client.on("auth_failure", msg => {
+  console.log("❌ Auth Failed:", msg);
+});
+
+client.on("disconnected", reason => {
+  console.log("⚠️ Disconnected:", reason);
 });
 
 client.initialize();
