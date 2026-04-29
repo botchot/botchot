@@ -152,15 +152,14 @@ const client = new Client({
     dataPath: '/data/.wwebjs_auth'
   }),
   puppeteer: {
-    headless: true,
-    args: [
-      '--no-sandbox',
-      '--disable-setuid-sandbox',
-      '--disable-dev-shm-usage',
-      '--disable-gpu'
-    ]
-  }
-});
+  executablePath: process.env.PUPPETEER_EXECUTABLE_PATH,
+  headless: true,
+  args: [
+    "--no-sandbox",
+    "--disable-setuid-sandbox",
+    "--disable-dev-shm-usage"
+  ]
+}
 
 let currentStep = 1;
 
