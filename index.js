@@ -163,7 +163,6 @@ const client = new Client({
 });
 
 let currentStep = 1;
-...
 
 client.on('qr', qr => {
   currentQR = qr;
