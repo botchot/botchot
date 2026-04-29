@@ -45,17 +45,18 @@ const client = new Client({
     clientId: "main-bot",
     dataPath: "/data/.wwebjs_auth"
   }),
-  puppeteer: {
-    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || "/usr/bin/chromium",
-    headless: true,
-    args: [
-      "--no-sandbox",
-      "--disable-setuid-sandbox",
-      "--disable-dev-shm-usage",
-      "--disable-gpu"
-    ]
-  }
-});
+  
+ puppeteer: {
+  headless: true,
+  args: [
+    "--no-sandbox",
+    "--disable-setuid-sandbox",
+    "--disable-dev-shm-usage",
+    "--disable-gpu",
+    "--user-data-dir=/tmp/chrome-profile",
+    "--disable-features=ProcessSingleton"
+  ]
+}
 
 // QR Event
 client.on("qr", (qr) => {
