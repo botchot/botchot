@@ -118,9 +118,10 @@ function parseMessage(text) {
 
 // ── WHATSAPP CLIENT ──────────────────────────────────────────────────────────
 const client = new Client({
-  authStrategy: new LocalAuth(),
-  puppeteer: { headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'] }
-});
+  authStrategy: new LocalAuth({
+  clientId: "main-bot",
+  dataPath: "/data/.wwebjs_auth"
+}),
 
 let currentStep = 1;
 
