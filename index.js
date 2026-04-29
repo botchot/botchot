@@ -149,7 +149,7 @@ function parseMessage(text) {
 const client = new Client({
   authStrategy: new LocalAuth({
     clientId: "main-bot",
-    dataPath: "/data/.wwebjs_auth"
+dataPath: "./.wwebjs_auth"
   }),
   puppeteer: {
     executablePath: process.env.PUPPETEER_EXECUTABLE_PATH,
