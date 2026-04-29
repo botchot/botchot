@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Matka Admin Panel</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body.day{--gold:#c97000;--gold2:#a85a00;--green:#1a7a3a;--red:#cc1133;--blue:#1a5fb4;--bg:#f5f0e8;--bg2:#fffdf5;--bg3:#ede8d8;--border:rgba(180,130,0,0.2);--text:#2a1f00;--dim:#8a7a50;--card:#fff8e8;}
+body.night{--gold:#f5c518;--gold2:#e8a000;--green:#00e676;--red:#ff1744;--blue:#448aff;--bg:#08080f;--bg2:#0f0f1c;--bg3:#161626;--border:rgba(245,197,24,0.15);--text:#ddd8f0;--dim:#6b6890;--card:#0f0f1c;}
+body{background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;min-height:100vh;transition:background .3s,color .3s;}
+
+/* LOADER */
+#loader{position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;transition:opacity .5s;}
+body.day #loader{background:#f5f0e8;}body.night #loader{background:#08080f;}
+.ld-dice{font-size:56px;animation:spin 2s ease-in-out infinite;margin-bottom:16px;}
+@keyframes spin{0%,100%{transform:scale(1)rotate(0);}50%{transform:scale(1.2)rotate(15deg);}}
+.ld-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(36px,7vw,68px);letter-spacing:7px;color:var(--gold);line-height:1;}
+.ld-sub{font-size:12px;letter-spacing:5px;color:var(--dim);margin-top:5px;text-transform:uppercase;}
+.ld-name{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:4px;color:var(--text);margin-top:18px;opacity:0;animation:fin .6s ease .9s forwards;}
+@keyframes fin{to{opacity:1;}}
+.ld-bar-wrap{width:min(260px,75vw);height:3px;background:var(--border);border-radius:2px;margin-top:22px;overflow:hidden;}
+.ld-bar{height:100%;background:linear-gradient(90deg,var(--gold),var(--gold2));animation:fill 2.5s cubic-bezier(.4,0,.2,1) forwards;}
+@keyframes fill{from{width:0}to{width:100%}}
+.ld-dots{margin-top:11px;display:flex;gap:7px;}
+.ld-dots span{width:6px;height:6px;border-radius:50%;background:var(--gold);opacity:.3;animation:dot 1.2s ease-in-out infinite;}
+.ld-dots span:nth-child(2){animation-delay:.2s}.ld-dots span:nth-child(3){animation-delay:.4s}
+@keyframes dot{0%,100%{opacity:.3;transform:translateY(0)}50%{opacity:1;transform:translateY(-5px)}}
+
+#app{display:none;}
+
+/* HEADER */
+header{background:var(--card);border-bottom:1px solid var(--border);padding:0 20px;height:54px;
+  display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;
+  box-shadow:0 2px 10px rgba(0,0,0,.1);}
+.logo{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:3px;color:var(--gold);}
+.logo em{color:var(--text);font-style:normal;}
+.hdr-r{display:flex;align-items:center;gap:10px;}
+.live{display:flex;align-items:center;gap:5px;background:rgba(0,200,80,.08);border:1px solid rgba(0,200,80,.25);border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700;color:var(--green);letter-spacing:2px;}
+.ldot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:blink 1s ease-in-out infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+#clock{font-family:'Share Tech Mono',monospace;font-size:13px;color:var(--gold);letter-spacing:2px;}
+
+/* DAY/NIGHT TOGGLE */
+.dn-wrap{display:flex;background:var(--bg3);border-radius:8px;padding:3px;gap:2px;}
+.dn-btn{font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:2px;padding:4px 14px;border:none;border-radius:6px;cursor:pointer;transition:all .2s;background:transparent;color:var(--dim);}
+.dn-btn.on-day{background:linear-gradient(135deg,#f5c518,#e8a000);color:#000;}
+.dn-btn.on-night{background:linear-gradient(135deg,#1a1a3e,#448aff);color:#fff;}
+
+/* DATE BAR */
+.datebar{background:var(--card);border-bottom:1px solid var(--border);padding:8px 20px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+input[type=date]{background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--gold);font-family:'Share Tech Mono',monospace;font-size:13px;padding:4px 10px;outline:none;}
+.btn{font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:2px;border:none;border-radius:7px;padding:5px 13px;cursor:pointer;transition:all .2s;}
+.btn:hover{transform:translateY(-1px);filter:brightness(1.1);}
+.btn-gold{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#fff;}
+.btn-dim{background:transparent;border:1px solid var(--border);color:var(--gold);}
+.btn-red{background:transparent;border:1px solid rgba(200,20,50,.4);color:var(--red);}
+.note{margin-left:auto;font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--dim);}
+
+/* MAIN */
+main{padding:16px 20px;max-width:1400px;margin:0 auto;}
+
+/* TOP CARDS */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:20px;}
+.card{background:var(--card);border:1px solid var(--border);border-radius:11px;padding:14px 12px;position:relative;overflow:hidden;transition:transform .2s;}
+.card:hover{transform:translateY(-2px);}
+.card::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--ca,linear-gradient(90deg,var(--gold),var(--gold2)));}
+.card.cg{--ca:linear-gradient(90deg,var(--green),#00bfa5);}
+.card.cb{--ca:linear-gradient(90deg,var(--blue),#651fff);}
+.card.cr{--ca:linear-gradient(90deg,var(--red),#ff6d00);}
+.card.co{--ca:linear-gradient(90deg,#ff9800,#ff5722);}
+.card.cday{--ca:linear-gradient(90deg,#f5a623,#e8900a);}
+.card.cnight{--ca:linear-gradient(90deg,#448aff,#651fff);}
+.ci{font-size:17px;margin-bottom:3px;}
+.cl{font-family:'Bebas Neue',sans-serif;font-size:11px;letter-spacing:2px;color:var(--dim);}
+.cv{font-family:'Share Tech Mono',monospace;font-size:clamp(15px,2vw,22px);color:var(--gold);margin-top:2px;}
+.cv.g{color:var(--green);}.cv.b{color:var(--blue);}.cv.r{color:var(--red);}.cv.o{color:#ff9800;}
+.cv.day{color:#f5a623;}.cv.night{color:#448aff;}
+
+/* SEC HEADING */
+.sh{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:3px;color:var(--gold);
+  margin-bottom:11px;padding-bottom:6px;border-bottom:1px solid var(--border);}
+
+/* STEPS */
+.steps{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:11px;margin-bottom:22px;}
+.sc{background:var(--card);border:1px solid var(--border);border-radius:11px;overflow:hidden;}
+.sc-top{background:rgba(245,197,24,.06);border-bottom:1px solid var(--border);padding:8px 13px;display:flex;align-items:center;justify-content:space-between;}
+.sc-num{font-family:'Bebas Neue',sans-serif;font-size:17px;letter-spacing:2px;color:var(--gold);}
+.sc-tot{font-family:'Share Tech Mono',monospace;font-size:15px;color:var(--green);}
+.sc-body{padding:9px 13px;}
+.sr{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(128,128,128,.06);font-size:12px;}
+.sr:last-child{border:none;}
+.srl{color:var(--dim);font-size:11px;letter-spacing:1px;}
+.srv{font-family:'Share Tech Mono',monospace;font-size:12px;}
+.srv.g{color:var(--green);font-size:14px;font-weight:700;}
+.chip{display:inline-block;background:rgba(68,138,255,.1);border:1px solid rgba(68,138,255,.2);border-radius:5px;padding:1px 7px;font-size:10px;color:var(--blue);letter-spacing:1px;margin:2px;}
+
+/* PANEL TABLE */
+.panel{background:var(--card);border:1px solid var(--border);border-radius:11px;overflow:hidden;margin-bottom:22px;}
+.ph{background:rgba(245,197,24,.05);border-bottom:1px solid var(--border);padding:9px 15px;font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:2px;color:var(--gold);}
+table{width:100%;border-collapse:collapse;}
+thead th{background:rgba(245,197,24,.04);color:var(--gold);font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:1.5px;text-align:left;padding:7px 13px;border-bottom:1px solid var(--border);}
+tbody tr{border-bottom:1px solid rgba(128,128,128,.05);transition:background .15s;}
+tbody tr:hover{background:rgba(245,197,24,.03);}
+tbody td{padding:7px 13px;font-size:13px;}
+.mono{font-family:'Share Tech Mono',monospace;}
+.ag{font-family:'Share Tech Mono',monospace;color:var(--green);}
+.ab{font-family:'Share Tech Mono',monospace;color:var(--blue);}
+.dim{color:var(--dim);}
+.badge{display:inline-block;padding:2px 7px;border-radius:5px;font-size:10px;font-weight:700;letter-spacing:1px;}
+.bopen{background:rgba(68,138,255,.1);color:var(--blue);border:1px solid rgba(68,138,255,.2);}
+.bclose{background:rgba(150,0,200,.1);color:#c040fb;border:1px solid rgba(150,0,200,.2);}
+.bday{background:rgba(245,165,0,.12);color:#f5a623;border:1px solid rgba(245,165,0,.25);}
+.bnight{background:rgba(68,100,255,.12);color:#448aff;border:1px solid rgba(68,100,255,.25);}
+.stag{background:rgba(245,197,24,.1);color:var(--gold);border:1px solid rgba(245,197,24,.2);border-radius:5px;padding:2px 7px;font-size:10px;font-weight:700;letter-spacing:1px;}
+.empty{text-align:center;padding:28px;color:var(--dim);font-size:14px;}
+.rej-txt{font-size:12px;color:var(--dim);max-width:350px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+/* TABS */
+.tabs{display:flex;gap:4px;margin-bottom:16px;}
+.tab{font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:2px;padding:5px 14px;border-radius:7px;cursor:pointer;background:var(--bg3);border:1px solid var(--border);color:var(--dim);transition:all .2s;}
+.tab.active{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#000;border-color:transparent;}
+
+/* TOAST */
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--card);border:1px solid var(--gold);border-radius:9px;padding:8px 18px;font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:2px;color:var(--gold);z-index:9999;transition:transform .3s;}
+#toast.show{transform:translateX(-50%) translateY(0);}
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:var(--bg);}
+::-webkit-scrollbar-thumb{background:rgba(200,160,0,.25);border-radius:3px;}
+@media(max-width:700px){main{padding:10px;}header{padding:0 10px;}.datebar{padding:6px 10px;}}
+</style>
+</head>
+<body class="night">
+
+<div id="loader">
+  <div class="ld-dice" id="ld-dice">🌙</div>
+  <div class="ld-title">MATKA ADMIN</div>
+  <div class="ld-sub">Admin Panel</div>
+  <div class="ld-name">🎰 ADMIN PANEL 🎰</div>
+  <div class="ld-bar-wrap"><div class="ld-bar"></div></div>
+  <div class="ld-dots"><span></span><span></span><span></span></div>
+</div>
+
+<div id="app">
+  <header>
+    <div class="logo">MATKA <em>ADMIN</em></div>
+    <div class="hdr-r">
+      <div class="dn-wrap">
+        <button class="dn-btn" id="btn-day" onclick="switchMode('day')">☀️ DAY</button>
+        <button class="dn-btn on-night" id="btn-night" onclick="switchMode('night')">🌙 NIGHT</button>
+      </div>
+      <div class="live"><div class="ldot"></div>LIVE</div>
+      <div id="clock">--:--:--</div>
+    </div>
+  </header>
+
+  <div class="datebar">
+    <input type="date" id="datePick" onchange="loadData()">
+    <button class="btn btn-gold" onclick="goToday()">AAJ</button>
+    <button class="btn btn-dim" onclick="refreshData()">🔄 REFRESH</button>
+    <button class="btn btn-dim" onclick="exportCSV()">⬇ CSV</button>
+    <button class="btn btn-red" id="reset-btn" onclick="doReset()">RESET DAY</button>
+    <span class="note">Auto: 30s</span>
+  </div>
+
+  <main>
+    <!-- TOP CARDS -->
+    <div class="cards">
+      <div class="card cday">
+        <div class="ci">☀️</div><div class="cl">DAY TOTAL</div>
+        <div class="cv day" id="t-day">₹0</div>
+      </div>
+      <div class="card cnight">
+        <div class="ci">🌙</div><div class="cl">NIGHT TOTAL</div>
+        <div class="cv night" id="t-night">₹0</div>
+      </div>
+      <div class="card cr">
+        <div class="ci">📨</div><div class="cl">MESSAGES</div>
+        <div class="cv r" id="t-msgs">0</div>
+      </div>
+      <div class="card cb">
+        <div class="ci">🎲</div><div class="cl">STEPS</div>
+        <div class="cv b" id="t-steps">0</div>
+      </div>
+      <div class="card cr">
+        <div class="ci">🚫</div><div class="cl">CANCELLED</div>
+        <div class="cv r" id="t-cancelled">0</div>
+      </div>
+      <div class="card co">
+        <div class="ci">⚠️</div><div class="cl">REJECTED</div>
+        <div class="cv o" id="t-rejected">0</div>
+      </div>
+    </div>
+
+    <!-- TABS -->
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('dashboard',this)">📊 DASHBOARD</button>
+      <button class="tab" onclick="switchTab('rejected',this)">⚠️ REJECTED</button>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div id="tab-dashboard">
+      <div class="sh">🎲 STEP-WISE TOTAL</div>
+      <div class="steps" id="steps-wrap"><div class="empty">Koi data nahi...</div></div>
+
+      <div class="sh">🏪 MARKET-WISE TOTAL</div>
+      <div class="panel">
+        <table>
+          <thead><tr><th>MARKET</th><th>SESSION</th><th>GROUP</th><th>STEP</th><th>TOTAL</th></tr></thead>
+          <tbody id="mkt-body"></tbody>
+        </table>
+      </div>
+
+      <div class="sh">📱 SABHI MESSAGES</div>
+      <div class="panel">
+        <table>
+          <thead><tr><th>TIME</th><th>STEP</th><th>GROUP</th><th>MARKET</th><th>SESSION</th><th>TOTAL</th></tr></thead>
+          <tbody id="msgs-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- REJECTED -->
+    <div id="tab-rejected" style="display:none">
+      <div class="sh">⚠️ REJECTED MESSAGES <span style="font-size:12px;color:var(--dim);font-family:'Rajdhani',sans-serif;">(numbers the par total nahi mila)</span></div>
+      <div class="panel">
+        <table>
+          <thead><tr><th>TIME</th><th>STEP</th><th>GROUP</th><th>MESSAGE</th></tr></thead>
+          <tbody id="rej-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div id="toast"></div>
+
+<script>
+let DATA = { messages:[], rejected:[] };
+let currentDate = getSessionDate();
+let currentMode = localStorage.getItem('sm_mode') || 'night';
+let currentTab = 'dashboard';
+
+window.onload = () => {
+  applyMode(currentMode);
+  setTimeout(() => {
+    const ld = document.getElementById('loader');
+    ld.style.opacity = '0';
+    setTimeout(() => { ld.style.display='none'; document.getElementById('app').style.display='block'; init(); }, 500);
+  }, 2600);
+};
+
+function init() {
+  document.getElementById('datePick').value = currentDate;
+  startClock(); loadData();
+  setInterval(loadData, 30000);
+}
+
+function getSessionDate() {
+  const now = new Date();
+  if (now.getHours()<1||(now.getHours()===1&&now.getMinutes()<30)) {
+    const p=new Date(now); p.setDate(p.getDate()-1); return p.toISOString().split('T')[0];
+  }
+  return now.toISOString().split('T')[0];
+}
+
+function goToday() { currentDate=getSessionDate(); document.getElementById('datePick').value=currentDate; loadData(); }
+
+function startClock() {
+  const t=()=>document.getElementById('clock').textContent=new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
+  t(); setInterval(t,1000);
+}
+
+// MODE
+function switchMode(mode) { applyMode(mode); loadData(); }
+
+function applyMode(mode) {
+  currentMode = mode;
+  localStorage.setItem('sm_mode', mode);
+  document.body.className = mode;
+  document.getElementById('btn-day').className = 'dn-btn'+(mode==='day'?' on-day':'');
+  document.getElementById('btn-night').className = 'dn-btn'+(mode==='night'?' on-night':'');
+  document.getElementById('ld-dice').textContent = mode==='day'?'☀️':'🌙';
+  // Update reset button label
+  const rb = document.getElementById('reset-btn');
+  if (rb) rb.textContent = 'RESET '+(mode==='day'?'DAY':'NIGHT');
+}
+
+// LOAD
+async function loadData() {
+  currentDate = document.getElementById('datePick').value || getSessionDate();
+  try {
+    const res = await fetch('/api/data?date='+currentDate);
+    if (res.ok) { DATA = await res.json(); }
+    else { DATA = demoData(); }
+  } catch { DATA = demoData(); }
+  render();
+}
+
+async function refreshData() { await loadData(); toast('✅ Refreshed!'); }
+
+function demoData() {
+  const d=getSessionDate();
+  return {
+    messages:[
+      {id:1,step:1,market:'KALYAN',session:'OPEN',group:'DAY',total:300,cancelled:false,timestamp:d+'T10:30:00Z'},
+      {id:2,step:1,market:'MILAN',session:'CLOSE',group:'DAY',total:500,cancelled:false,timestamp:d+'T11:00:00Z'},
+      {id:3,step:2,market:'SRIDEVI',session:'OPEN',group:'NIGHT',total:200,cancelled:false,timestamp:d+'T11:30:00Z'},
+      {id:4,step:1,market:'MILAN',session:'OPEN',group:'DAY',total:-300,cancelled:true,timestamp:d+'T12:00:00Z'},
+    ],
+    rejected:[
+      {id:1,step:1,group:'DAY',rawMessage:'48x25 no total given',timestamp:d+'T10:45:00Z'},
+      {id:2,step:2,group:'NIGHT',rawMessage:'900.200.255.499...10',timestamp:d+'T11:15:00Z'},
+    ]
+  };
+}
+
+// RENDER
+function render() {
+  const msgs = DATA.messages||[];
+  const rejected = DATA.rejected||[];
+
+  // Day/Night totals — always from ALL messages regardless of toggle
+  const dayTotal = msgs.filter(m=>m.group==='DAY').reduce((s,m)=>s+(m.total||0),0);
+  const nightTotal = msgs.filter(m=>m.group==='NIGHT').reduce((s,m)=>s+(m.total||0),0);
+
+  // Filtered for current mode display
+  const grp = currentMode.toUpperCase();
+  const filtered = msgs.filter(m=>!m.group||m.group===grp);
+  const filteredRej = rejected.filter(r=>!r.group||r.group===grp);
+
+  renderTotals(dayTotal, nightTotal, filtered, filteredRej);
+  renderSteps(filtered);
+  renderMarkets(filtered);
+  renderMsgs(filtered);
+  renderRejected(filteredRej);
+}
+
+function renderTotals(dayTotal, nightTotal, msgs, rejected) {
+  const setEl = (id, val, pre='₹') => {
+    const el = document.getElementById(id); if (!el) return;
+    setTimeout(()=>{ el.textContent=(val<0?'-'+pre:pre)+Math.abs(val).toLocaleString('en-IN'); },650);
+  };
+  setEl('t-day', dayTotal);
+  setEl('t-night', nightTotal);
+  anim('t-msgs', msgs.length);
+  anim('t-steps', new Set(msgs.map(m=>m.step||1)).size);
+  anim('t-cancelled', msgs.filter(m=>m.cancelled).length);
+  anim('t-rejected', rejected.length);
+}
+
+function anim(id, target) {
+  const el=document.getElementById(id); if (!el) return;
+  const dur=600, t0=performance.now();
+  const run=now=>{ const p=Math.min((now-t0)/dur,1); el.textContent=Math.floor(p*target).toLocaleString('en-IN'); if(p<1)requestAnimationFrame(run); else el.textContent=target.toLocaleString('en-IN'); };
+  requestAnimationFrame(run);
+}
+
+function renderSteps(msgs) {
+  const byStep={};
+  msgs.forEach(m=>{ const s=m.step||1; if(!byStep[s])byStep[s]={total:0,count:0,markets:new Set()}; byStep[s].total+=m.total||0; byStep[s].count++; if(m.market&&m.market!=='UNKNOWN')byStep[s].markets.add(m.market); });
+  const wrap=document.getElementById('steps-wrap');
+  const keys=Object.keys(byStep).sort((a,b)=>+a-+b);
+  if(!keys.length){wrap.innerHTML='<div class="empty">Koi data nahi...</div>';return;}
+  const em={1:'1️⃣',2:'2️⃣',3:'3️⃣',4:'4️⃣',5:'5️⃣'};
+  wrap.innerHTML=keys.map(s=>{
+    const d=byStep[s], neg=d.total<0;
+    const mkts=[...d.markets].map(m=>`<span class="chip">${m}</span>`).join('');
+    return`<div class="sc"><div class="sc-top"><div class="sc-num">${em[s]||'🎲'} STEP ${s}</div>
+      <div class="sc-tot" style="color:${neg?'var(--red)':'var(--green)'}"> ${neg?'-₹':'₹'}${Math.abs(d.total).toLocaleString('en-IN')}</div></div>
+      <div class="sc-body">${mkts?`<div style="margin-bottom:7px">${mkts}</div>`:''}
+      <div class="sr"><span class="srl">MESSAGES</span><span class="srv" style="color:var(--dim)">${d.count}</span></div>
+      <div class="sr" style="margin-top:3px;padding-top:6px;border-top:1px solid var(--border);">
+        <span class="srl" style="font-weight:700;">STEP TOTAL</span>
+        <span class="srv g" style="color:${neg?'var(--red)':'var(--green)'}"> ${neg?'-₹':'₹'}${Math.abs(d.total).toLocaleString('en-IN')}</span>
+      </div></div></div>`;
+  }).join('');
+}
+
+function renderMarkets(msgs) {
+  const byKey={};
+  msgs.forEach(m=>{ const k=`${m.step||1}__${m.market||'UNKNOWN'}__${m.session||'OPEN'}`;
+    if(!byKey[k])byKey[k]={step:m.step||1,market:m.market||'UNKNOWN',session:m.session||'OPEN',group:m.group||'',total:0};
+    byKey[k].total+=m.total||0; });
+  const rows=Object.values(byKey).sort((a,b)=>a.step-b.step||b.total-a.total);
+  const tb=document.getElementById('mkt-body');
+  if(!rows.length){tb.innerHTML='<tr><td colspan="5" class="empty">No data</td></tr>';return;}
+  tb.innerHTML=rows.map(r=>{ const neg=r.total<0; return`<tr>
+    <td style="font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:1px">${r.market}</td>
+    <td><span class="badge b${r.session.toLowerCase()}">${r.session}</span></td>
+    <td><span class="badge b${(r.group||'day').toLowerCase()}">${r.group||'—'}</span></td>
+    <td><span class="stag">STEP ${r.step}</span></td>
+    <td class="mono" style="font-size:15px;font-weight:700;color:${neg?'var(--red)':'var(--green)'}"> ${neg?'-₹':'₹'}${Math.abs(r.total).toLocaleString('en-IN')}</td>
+  </tr>`; }).join('');
+}
+
+function renderMsgs(msgs) {
+  const tb=document.getElementById('msgs-body');
+  const sorted=[...msgs].sort((a,b)=>new Date(b.timestamp)-new Date(a.timestamp));
+  if(!sorted.length){tb.innerHTML='<tr><td colspan="6" class="empty">No messages</td></tr>';return;}
+  tb.innerHTML=sorted.map(m=>{ const neg=(m.total||0)<0, c=m.cancelled;
+    return`<tr style="${c?'background:rgba(255,23,68,.04)':''}">
+    <td class="dim" style="font-size:11px">${new Date(m.timestamp).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}</td>
+    <td><span class="stag">STEP ${m.step||1}</span></td>
+    <td><span class="badge b${(m.group||'day').toLowerCase()}">${m.group||'—'}</span></td>
+    <td style="font-family:'Bebas Neue',sans-serif;font-size:13px">${m.market||'—'}</td>
+    <td><span class="badge b${(m.session||'open').toLowerCase()}">${m.session||'OPEN'}</span></td>
+    <td class="mono" style="font-size:13px;font-weight:700;color:${neg?'var(--red)':'var(--green)'}"> ${neg?'-₹':'₹'}${Math.abs(m.total||0).toLocaleString('en-IN')}${c?' 🚫':''}</td>
+  </tr>`; }).join('');
+}
+
+function renderRejected(rejected) {
+  const tb=document.getElementById('rej-body');
+  if(!rejected.length){tb.innerHTML='<tr><td colspan="4" class="empty">🎉 Koi rejected nahi!</td></tr>';return;}
+  const sorted=[...rejected].sort((a,b)=>new Date(b.timestamp)-new Date(a.timestamp));
+  tb.innerHTML=sorted.map(r=>`<tr>
+    <td class="dim" style="font-size:11px;white-space:nowrap">${new Date(r.timestamp).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}</td>
+    <td><span class="stag">STEP ${r.step||1}</span></td>
+    <td><span class="badge b${(r.group||'day').toLowerCase()}">${r.group||'—'}</span></td>
+    <td class="rej-txt" title="${(r.rawMessage||'').replace(/"/g,"'")}">${r.rawMessage||'—'}</td>
+  </tr>`).join('');
+}
+
+function switchTab(tab, el) {
+  document.getElementById('tab-dashboard').style.display=tab==='dashboard'?'':'none';
+  document.getElementById('tab-rejected').style.display=tab==='rejected'?'':'none';
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  if(el)el.classList.add('active');
+}
+
+function exportCSV() {
+  const msgs=DATA.messages||[];
+  const rows=[['Time','Step','Group','Market','Session','Total','Cancelled']];
+  msgs.forEach(m=>rows.push([new Date(m.timestamp).toLocaleString('en-IN'),m.step||1,m.group||'',m.market||'',m.session||'',m.total||0,m.cancelled?'YES':'']));
+  const csv=rows.map(r=>r.join(',')).join('\n');
+  const a=document.createElement('a'); a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download='matka-'+currentDate+'-'+currentMode+'.csv'; a.click(); toast('⬇ CSV Downloaded!');
+}
+
+async function doReset() {
+  const grp=currentMode.toUpperCase();
+  if(!confirm(currentDate+' ka '+grp+' data reset karna hai?'))return;
+  try{ await fetch('/api/reset?date='+currentDate+'&group='+grp,{method:'POST'}); toast('🔄 '+grp+' Reset!'); loadData(); }
+  catch{ toast('Reset failed!'); }
+}
+
+function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2500); }
+</script>
+</body>
+</html>
